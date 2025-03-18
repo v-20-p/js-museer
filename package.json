@@ -13,6 +13,7 @@
     "ws": "^8.18.1"
   },
   "scripts": {
+    "build": "tsc",
     "ts-watch": "tsc -w",
     "start": "nodemon --watch \"src/**/*.ts\" --exec \"ts-node\" ./src/index.ts"
   },
