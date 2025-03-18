@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Camera Control Dashboard</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        h1, h2 { font-family: Arial, sans-serif; }
+        button { margin: 5px; padding: 8px; font-size: 16px; }
+        img { margin: 10px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Camera Control Dashboard</h1>
+    <div id="cameras" style="width: 400px; height: 400px; background-color: bisque;"></div>
+
+    <script>
+        const socket = io("http://localhost:3000");
+        const cameraContainer = document.getElementById("cameras");
+
+        // Update camera state buttons
+        function updateCamera(cameraId, state) {
+            let cameraDiv = document.getElementById(cameraId);
+            if (!cameraDiv) {
+                cameraDiv = document.createElement("div");
+                cameraDiv.id = cameraId;
+                cameraDiv.innerHTML = `
+                    <h2>${cameraId}</h2>
+                    <button onclick="toggleCamera('${cameraId}', true)">Turn ON</button>
+                    <button onclick="toggleCamera('${cameraId}', false)">Turn OFF</button>
+                    <div id="${cameraId}-image"></div>
+                `;
+                cameraContainer.appendChild(cameraDiv);
+            }
+            cameraDiv.querySelector("button").disabled = state;
+        }
+
+        // Toggle camera state
+        function toggleCamera(cameraId, state) {
+            socket.emit("toggleCamera", { cameraId, state });
+        }
+
+        // Display received image
+        socket.on("newImage", ({ cameraId, image }) => {
+            const imageDiv = document.getElementById(`${cameraId}-image`);
+            if (imageDiv) {
+                imageDiv.innerHTML = `<img src="data:image/jpeg;base64,${image}" width="300" alt="Camera Image"/>`;
+            }
+        });
+
+        // Update camera states on load
+        socket.on("allCameraStates", (states) => {
+            for (const [cameraId, state] of Object.entries(states)) {
+                updateCamera(cameraId, state);
+            }
+        });
+
+        // Update camera status when toggled
+        socket.on("cameraStatus", ({ cameraId, state }) => {
+            updateCamera(cameraId, state);
+        });
+    </script>
+</body>
+</html>
